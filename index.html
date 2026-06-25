@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sustainability Workplan Builder</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="record-rail">
+        <div class="brand-block">
+          <div class="brand-mark">S</div>
+          <div>
+            <h1>Sustainability Workplans</h1>
+            <p>2025 support rubric</p>
+          </div>
+        </div>
+
+        <div class="rail-actions">
+          <button class="primary" id="newPlanButton" type="button">New workplan</button>
+          <button id="duplicatePlanButton" type="button">Duplicate</button>
+        </div>
+
+        <label class="field compact">
+          <span>Saved workplans</span>
+          <input id="recordSearch" type="search" placeholder="Search records">
+        </label>
+
+        <div id="recordList" class="record-list" aria-live="polite"></div>
+      </aside>
+
+      <main class="workspace">
+        <header class="workspace-header">
+          <div>
+            <p class="eyebrow">Workplan creation tool</p>
+            <h2 id="currentPlanTitle">Untitled Workplan</h2>
+          </div>
+          <div class="header-actions">
+            <button id="savePlanButton" class="primary" type="button">Save</button>
+            <button id="exportCsvButton" type="button">CSV</button>
+            <button id="exportExcelButton" type="button">Excel</button>
+            <button id="emailPlanButton" type="button">Email</button>
+          </div>
+        </header>
+
+        <section class="summary-strip" aria-label="Workplan summary">
+          <div class="metric">
+            <span>Total hours</span>
+            <strong id="totalHours">0</strong>
+          </div>
+          <div class="metric">
+            <span>Estimated fee</span>
+            <strong id="totalFee">$0</strong>
+          </div>
+          <div class="metric">
+            <span>Buildings</span>
+            <strong id="summaryBuildings">1</strong>
+          </div>
+          <div class="metric">
+            <span>Template</span>
+            <strong id="summarySize">Small</strong>
+          </div>
+        </section>
+
+        <section class="editor-grid">
+          <form id="workplanForm" class="panel details-panel">
+            <div class="panel-heading">
+              <h3>Project setup</h3>
+              <span id="savedStateLabel">Unsaved</span>
+            </div>
+
+            <div class="form-grid">
+              <label class="field">
+                <span>Project name</span>
+                <input id="projectName" name="projectName" type="text" required>
+              </label>
+              <label class="field">
+                <span>Project number</span>
+                <input id="projectNumber" name="projectNumber" type="text">
+              </label>
+              <label class="field">
+                <span>Project manager</span>
+                <input id="projectManager" name="projectManager" type="text">
+              </label>
+              <label class="field">
+                <span>Sustainability lead</span>
+                <input id="sustainabilityLead" name="sustainabilityLead" type="text">
+              </label>
+              <label class="field">
+                <span>Due date</span>
+                <input id="dueDate" name="dueDate" type="date">
+              </label>
+              <label class="field">
+                <span>Email recipient</span>
+                <input id="emailRecipient" name="emailRecipient" type="email" placeholder="name@example.com">
+              </label>
+              <label class="field">
+                <span>Building count</span>
+                <input id="buildingCount" name="buildingCount" type="number" min="1" step="1" value="1">
+              </label>
+              <label class="field">
+                <span>Estimated square feet</span>
+                <input id="squareFeet" name="squareFeet" type="number" min="0" step="1000">
+              </label>
+              <label class="field">
+                <span>Billing rate</span>
+                <input id="billingRate" name="billingRate" type="number" min="0" step="5" value="240">
+              </label>
+            </div>
+
+            <fieldset class="segmented-field">
+              <legend>Project size template</legend>
+              <label>
+                <input type="radio" name="projectSize" value="small" checked>
+                <span>Small</span>
+              </label>
+              <label>
+                <input type="radio" name="projectSize" value="medium">
+                <span>Medium</span>
+              </label>
+              <label>
+                <input type="radio" name="projectSize" value="large">
+                <span>Large</span>
+              </label>
+            </fieldset>
+
+            <label class="toggle-row">
+              <span>
+                <strong>Green Building certification</strong>
+                <small>Enables certification and specialty-service scope rows.</small>
+              </span>
+              <input id="greenCertification" name="greenCertification" type="checkbox">
+            </label>
+
+            <fieldset class="option-grid" id="serviceOptions">
+              <legend>Certification and service options</legend>
+              <label><input type="checkbox" name="services" value="LEED"> <span>LEED</span></label>
+              <label><input type="checkbox" name="services" value="CHPS"> <span>CHPS</span></label>
+              <label><input type="checkbox" name="services" value="LCA"> <span>LCA</span></label>
+              <label><input type="checkbox" name="services" value="CALGreen CxA (External)"> <span>CALGreen CxA (External)</span></label>
+              <label><input type="checkbox" name="services" value="Specialty Services"> <span>Specialty Services</span></label>
+            </fieldset>
+          </form>
+
+          <section class="panel">
+            <div class="panel-heading">
+              <h3>Phase mix</h3>
+              <span id="phaseCountLabel">0 phases</span>
+            </div>
+            <div id="phaseBars" class="phase-bars"></div>
+          </section>
+        </section>
+
+        <section class="panel table-panel">
+          <div class="panel-heading">
+            <div>
+              <h3>Generated workplan</h3>
+              <p>Hours remain editable before saving or exporting.</p>
+            </div>
+            <button id="resetRowsButton" type="button">Reset from template</button>
+          </div>
+          <div class="table-wrap">
+            <table id="workplanTable">
+              <thead>
+                <tr>
+                  <th>Use</th>
+                  <th>Phase</th>
+                  <th>Task</th>
+                  <th>Hours</th>
+                  <th>Rate</th>
+                  <th>Fee</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel integration-panel">
+          <div class="panel-heading">
+            <div>
+              <h3>Sigma Analytics frame</h3>
+              <p>Saved records already use the API-ready payload shape.</p>
+            </div>
+            <button id="copyPayloadButton" type="button">Copy payload</button>
+          </div>
+          <pre id="payloadPreview" aria-label="Current workplan JSON payload"></pre>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="emailDialog">
+      <form method="dialog" class="dialog-panel">
+        <div class="panel-heading">
+          <div>
+            <h3>Confirm email package</h3>
+            <p>Review the configured options before opening the email draft.</p>
+          </div>
+          <button value="cancel" class="icon-button" type="submit" aria-label="Close">x</button>
+        </div>
+        <div id="emailReview" class="email-review"></div>
+        <div class="dialog-actions">
+          <button id="downloadEmailCsvButton" type="button">Download CSV</button>
+          <button id="downloadEmlButton" type="button">Download .eml</button>
+          <button id="openEmailDraftButton" class="primary" type="button">Open email draft</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
