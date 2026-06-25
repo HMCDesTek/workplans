@@ -246,6 +246,18 @@ legend {
   color: var(--ink);
 }
 
+.calculated-field output {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 11px;
+  background: var(--surface-2);
+  color: var(--green);
+  font-weight: 800;
+}
+
 .field.compact {
   margin-bottom: 12px;
 }
@@ -269,6 +281,28 @@ legend {
   margin-bottom: 8px;
 }
 
+.option-legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+}
+
+.option-legend .section-enable {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 10px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 750;
+}
+
 .segmented-field label,
 .option-grid label {
   display: flex;
@@ -280,6 +314,14 @@ legend {
   padding: 0 11px;
   background: #fff;
   font-weight: 650;
+}
+
+.option-grid .option-legend .section-enable {
+  min-height: 32px;
+  padding: 0 10px;
+  background: var(--surface-2);
+  font-size: 12px;
+  font-weight: 750;
 }
 
 .segmented-field input,
@@ -320,6 +362,10 @@ legend {
   gap: 8px;
 }
 
+.option-grid input[name="services"]:disabled + span {
+  color: #9ba59d;
+}
+
 .phase-bars {
   display: grid;
   gap: 14px;
@@ -356,6 +402,31 @@ legend {
   margin-top: 18px;
 }
 
+.app-footer {
+  box-shadow: none;
+}
+
+.app-footer summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.app-footer summary::marker {
+  color: var(--green);
+}
+
+.app-footer summary small {
+  font-weight: 650;
+}
+
+.footer-content {
+  margin-top: 16px;
+}
+
 .table-wrap {
   overflow: auto;
   border: 1px solid var(--line);
@@ -366,6 +437,31 @@ table {
   width: 100%;
   border-collapse: collapse;
   min-width: 980px;
+}
+
+#workplanTable.notes-active {
+  table-layout: fixed;
+}
+
+#workplanTable.notes-active th:nth-child(1) {
+  width: 52px;
+}
+
+#workplanTable.notes-active th:nth-child(2) {
+  width: 64px;
+}
+
+#workplanTable.notes-active th:nth-child(3) {
+  width: 190px;
+}
+
+#workplanTable.notes-active th:nth-child(4),
+#workplanTable.notes-active th:nth-child(5) {
+  width: 76px;
+}
+
+#workplanTable.notes-active th:nth-child(6) {
+  width: 88px;
 }
 
 th,
@@ -390,8 +486,35 @@ tbody tr.phase-total {
   font-weight: 800;
 }
 
+tbody tr.phase-summary {
+  background: #f7faf6;
+  cursor: pointer;
+}
+
+tbody tr.phase-summary:hover {
+  background: #edf6ef;
+}
+
+tbody tr.phase-summary td {
+  vertical-align: middle;
+  font-weight: 750;
+}
+
+tbody tr.phase-detail td:nth-child(2) {
+  border-left: 3px solid var(--green-2);
+}
+
+.phase-toggle {
+  width: 34px;
+  min-height: 30px;
+  padding: 0;
+  border-radius: 7px;
+  font-weight: 850;
+}
+
 td input[type="number"],
-td input[type="text"] {
+td input[type="text"],
+td textarea {
   width: 100%;
   min-width: 78px;
   min-height: 34px;
@@ -399,6 +522,33 @@ td input[type="text"] {
   border-radius: 7px;
   padding: 6px 8px;
   background: #fff;
+}
+
+td textarea {
+  display: block;
+  min-width: 240px;
+  max-width: 100%;
+  line-height: 1.35;
+  resize: none;
+}
+
+tr.notes-editing {
+  height: 132px;
+}
+
+tr.notes-editing td {
+  vertical-align: top;
+}
+
+tr.notes-editing .notes-input {
+  position: relative;
+  z-index: 4;
+  width: min(640px, calc(100vw - 430px));
+  max-width: none;
+  min-height: 108px;
+  margin-left: clamp(-430px, -34vw, -220px);
+  box-shadow: 0 18px 34px rgba(32, 42, 36, 0.18);
+  resize: vertical;
 }
 
 .fee-cell {

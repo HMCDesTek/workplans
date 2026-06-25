@@ -58,7 +58,7 @@
             <strong id="summaryBuildings">1</strong>
           </div>
           <div class="metric">
-            <span>Template</span>
+            <span>Project Size</span>
             <strong id="summarySize">Small</strong>
           </div>
         </section>
@@ -103,38 +103,22 @@
                 <span>Estimated square feet</span>
                 <input id="squareFeet" name="squareFeet" type="number" min="0" step="1000">
               </label>
+              <label class="field calculated-field">
+                <span>Project size</span>
+                <output id="projectSizeOutput">Small</output>
+              </label>
               <label class="field">
                 <span>Billing rate</span>
                 <input id="billingRate" name="billingRate" type="number" min="0" step="5" value="240">
               </label>
             </div>
 
-            <fieldset class="segmented-field">
-              <legend>Project size template</legend>
-              <label>
-                <input type="radio" name="projectSize" value="small" checked>
-                <span>Small</span>
-              </label>
-              <label>
-                <input type="radio" name="projectSize" value="medium">
-                <span>Medium</span>
-              </label>
-              <label>
-                <input type="radio" name="projectSize" value="large">
-                <span>Large</span>
-              </label>
-            </fieldset>
-
-            <label class="toggle-row">
-              <span>
-                <strong>Green Building certification</strong>
-                <small>Enables certification and specialty-service scope rows.</small>
-              </span>
-              <input id="greenCertification" name="greenCertification" type="checkbox">
-            </label>
-
             <fieldset class="option-grid" id="serviceOptions">
-              <legend>Certification and service options</legend>
+              <legend class="option-legend">
+                <span>Certification and service options</span>
+                <label class="section-enable"><input id="greenCertification" name="greenCertification" type="checkbox"> <span>Enable</span></label>
+              </legend>
+              <label><input type="checkbox" name="services" value="Green Building certification"> <span>Green Building certification</span></label>
               <label><input type="checkbox" name="services" value="LEED"> <span>LEED</span></label>
               <label><input type="checkbox" name="services" value="CHPS"> <span>CHPS</span></label>
               <label><input type="checkbox" name="services" value="LCA"> <span>LCA</span></label>
@@ -145,7 +129,7 @@
 
           <section class="panel">
             <div class="panel-heading">
-              <h3>Phase mix</h3>
+              <h3>Phase Allocation</h3>
               <span id="phaseCountLabel">0 phases</span>
             </div>
             <div id="phaseBars" class="phase-bars"></div>
@@ -178,16 +162,22 @@
           </div>
         </section>
 
-        <section class="panel integration-panel">
-          <div class="panel-heading">
-            <div>
-              <h3>Sigma Analytics frame</h3>
-              <p>Saved records already use the API-ready payload shape.</p>
+        <details class="panel integration-panel app-footer">
+          <summary>
+            <span>Sigma Analytics deployment</span>
+            <small>API payload preview</small>
+          </summary>
+          <div class="footer-content">
+            <div class="panel-heading">
+              <div>
+                <h3>Sigma Analytics frame</h3>
+                <p>Saved records already use the API-ready payload shape.</p>
+              </div>
+              <button id="copyPayloadButton" type="button">Copy payload</button>
             </div>
-            <button id="copyPayloadButton" type="button">Copy payload</button>
+            <pre id="payloadPreview" aria-label="Current workplan JSON payload"></pre>
           </div>
-          <pre id="payloadPreview" aria-label="Current workplan JSON payload"></pre>
-        </section>
+        </details>
       </main>
     </div>
 

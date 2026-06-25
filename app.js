@@ -31,6 +31,10 @@ const BASE_TASKS = [
 ];
 
 const SERVICE_TEMPLATES = {
+  "Green Building certification": [
+    { phase: "Certification", task: "Green Building certification strategy and coordination", hours: { small: 8, medium: 14, large: 22 }, notes: "Added planning allowance. Select LEED, CHPS, or other specialty services if a specific rating system applies." },
+    { phase: "Certification", task: "Certification documentation planning", hours: { small: 10, medium: 18, large: 28 }, notes: "Added planning allowance for certification setup and documentation approach." },
+  ],
   LEED: [
     { phase: "Certification", task: "LEED scorecard and basis of design", hours: { small: 10, medium: 16, large: 24 }, notes: "Added planning allowance. Confirm project-specific fee before contracting." },
     { phase: "Certification", task: "LEED documentation coordination", hours: { small: 18, medium: 32, large: 48 }, notes: "Added planning allowance. Confirm project-specific fee before contracting." },
@@ -74,6 +78,7 @@ const emptyPlan = () => ({
 let plans = loadPlans();
 let currentPlan = plans[0] || emptyPlan();
 let dirty = false;
+let expandedPhases = new Set();
 
 const el = {
   form: document.querySelector("#workplanForm"),
@@ -86,6 +91,7 @@ const el = {
   totalFee: document.querySelector("#totalFee"),
   summaryBuildings: document.querySelector("#summaryBuildings"),
   summarySize: document.querySelector("#summarySize"),
+  projectSizeOutput: document.querySelector("#projectSizeOutput"),
   phaseBars: document.querySelector("#phaseBars"),
   phaseCount: document.querySelector("#phaseCountLabel"),
   payloadPreview: document.querySelector("#payloadPreview"),
@@ -151,7 +157,6 @@ function loadPlanIntoForm(plan) {
     const input = document.querySelector(`#${field}`);
     input.value = plan[field] ?? "";
   }
-  document.querySelector(`input[name="projectSize"][value="${plan.projectSize || "small"}"]`).checked = true;
   document.querySelector("#greenCertification").checked = Boolean(plan.greenCertification);
   document.querySelectorAll('input[name="services"]').forEach((input) => {
     input.checked = plan.services?.includes(input.value) || false;
@@ -160,6 +165,8 @@ function loadPlanIntoForm(plan) {
 
 function readPlanFromForm(base) {
   const formData = new FormData(el.form);
+  const squareFeet = clean(formData.get("squareFeet"));
+  const greenCertification = formData.get("greenCertification") === "on";
   return {
     ...base,
     projectName: clean(formData.get("projectName")),
@@ -169,11 +176,11 @@ function readPlanFromForm(base) {
     dueDate: clean(formData.get("dueDate")),
     emailRecipient: clean(formData.get("emailRecipient")),
     buildingCount: Math.max(1, parseInt(formData.get("buildingCount"), 10) || 1),
-    squareFeet: clean(formData.get("squareFeet")),
+    squareFeet,
     billingRate: Math.max(0, Number(formData.get("billingRate")) || 0),
-    projectSize: formData.get("projectSize") || "small",
-    greenCertification: formData.get("greenCertification") === "on",
-    services: formData.get("greenCertification") === "on" ? formData.getAll("services") : [],
+    projectSize: getProjectSizeFromSquareFeet(squareFeet),
+    greenCertification,
+    services: greenCertification ? formData.getAll("services") : [],
   };
 }
 
@@ -244,31 +251,90 @@ function renderHeader() {
   el.title.textContent = currentPlan.projectName || "Untitled Workplan";
   const isSaved = plans.some((plan) => plan.id === currentPlan.id);
   el.savedState.textContent = dirty || !isSaved ? "Unsaved changes" : `Saved ${formatDateTime(currentPlan.updatedAt)}`;
-  document.querySelector("#serviceOptions").style.opacity = currentPlan.greenCertification ? "1" : "0.52";
+  el.projectSizeOutput.textContent = SIZE_LABELS[currentPlan.projectSize];
+  document.querySelector("#serviceOptions").classList.toggle("services-enabled", currentPlan.greenCertification);
+  document.querySelectorAll('input[name="services"]').forEach((input) => {
+    if (!currentPlan.greenCertification) input.checked = false;
+    input.disabled = !currentPlan.greenCertification;
+  });
 }
 
 function renderTable() {
   const rows = getTemplateRows(currentPlan);
+  const groups = rows.reduce((acc, row) => {
+    if (!acc.has(row.phase)) acc.set(row.phase, []);
+    acc.get(row.phase).push(row);
+    return acc;
+  }, new Map());
+
   const fragments = [];
-  let lastPhase = "";
-  for (const row of rows) {
-    if (row.phase !== lastPhase) {
-      lastPhase = row.phase;
-    }
+  for (const [phase, phaseRows] of groups) {
+    const isExpanded = expandedPhases.has(phase);
+    const activeRows = phaseRows.filter((row) => row.active);
+    const phaseHours = round(activeRows.reduce((sum, row) => sum + Number(row.hours || 0), 0));
+    const phaseFee = round(activeRows.reduce((sum, row) => sum + Number(row.hours || 0) * Number(row.rate || 0), 0));
     fragments.push(`
-      <tr data-key="${escapeHtml(row.key)}">
+      <tr class="phase-summary" data-phase="${escapeAttribute(phase)}">
+        <td><button class="phase-toggle" type="button" aria-expanded="${isExpanded}" aria-label="${isExpanded ? "Collapse" : "Expand"} ${escapeAttribute(phase)}">${isExpanded ? "v" : ">"}</button></td>
+        <td><strong>${escapeHtml(phase)}</strong></td>
+        <td>${activeRows.length} active task${activeRows.length === 1 ? "" : "s"}</td>
+        <td>${number(phaseHours)}</td>
+        <td></td>
+        <td class="fee-cell">${money(phaseFee)}</td>
+        <td></td>
+      </tr>
+    `);
+    if (!isExpanded) continue;
+
+    for (const row of phaseRows) {
+    fragments.push(`
+      <tr class="phase-detail" data-key="${escapeHtml(row.key)}">
         <td><input class="row-active" type="checkbox" ${row.active ? "checked" : ""} aria-label="Use ${escapeHtml(row.task)}"></td>
-        <td>${escapeHtml(row.phase)}</td>
+        <td></td>
         <td><strong>${escapeHtml(row.task)}</strong><br><small>${escapeHtml(row.source)}</small></td>
         <td><input data-field="hours" type="number" min="0" step="0.25" value="${row.hours}"></td>
         <td><input data-field="rate" type="number" min="0" step="5" value="${row.rate}"></td>
         <td class="fee-cell">${money(Number(row.hours) * Number(row.rate))}</td>
-        <td><input data-field="notes" type="text" value="${escapeAttribute(row.notes)}"></td>
+        <td><textarea class="notes-input" data-field="notes" rows="1">${escapeHtml(row.notes)}</textarea></td>
       </tr>
     `);
+    }
   }
   el.tableBody.innerHTML = fragments.join("");
   el.tableBody.querySelectorAll("input").forEach((input) => input.addEventListener("change", handleRowEdit));
+  el.tableBody.querySelectorAll("textarea").forEach((textarea) => {
+    textarea.addEventListener("change", handleRowEdit);
+    textarea.addEventListener("focus", handleNotesFocus);
+    textarea.addEventListener("blur", handleNotesBlur);
+  });
+  el.tableBody.querySelectorAll(".phase-summary").forEach((row) => row.addEventListener("click", handlePhaseToggle));
+  el.tableBody.querySelectorAll(".phase-toggle").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      handlePhaseToggle(event);
+    });
+  });
+}
+
+function handleNotesFocus(event) {
+  document.querySelector("#workplanTable").classList.add("notes-active");
+  event.target.closest("tr")?.classList.add("notes-editing");
+}
+
+function handleNotesBlur(event) {
+  document.querySelector("#workplanTable").classList.remove("notes-active");
+  event.target.closest("tr")?.classList.remove("notes-editing");
+}
+
+function handlePhaseToggle(event) {
+  const phase = event.target.closest("[data-phase]")?.dataset.phase;
+  if (!phase) return;
+  if (expandedPhases.has(phase)) {
+    expandedPhases.delete(phase);
+  } else {
+    expandedPhases.add(phase);
+  }
+  renderTable();
 }
 
 function handleRowEdit(event) {
@@ -470,7 +536,7 @@ function openEmailReview() {
   el.emailReview.innerHTML = [
     ["Recipient", currentPlan.emailRecipient || "Not set"],
     ["Project", payload.project.name || "Untitled Workplan"],
-    ["Template", SIZE_LABELS[payload.project.projectSize]],
+    ["Project Size", SIZE_LABELS[payload.project.projectSize]],
     ["Buildings", payload.project.buildingCount],
     ["Services", payload.scopeOptions.services.join(", ") || "Base scope"],
     ["Total", `${number(payload.financials.totalHours)} hrs / ${money(payload.financials.estimatedFee)}`],
@@ -598,6 +664,13 @@ function slug(value) {
 
 function clean(value) {
   return String(value || "").trim();
+}
+
+function getProjectSizeFromSquareFeet(value) {
+  const squareFeet = Number(value);
+  if (!Number.isFinite(squareFeet) || squareFeet < 20000) return "small";
+  if (squareFeet < 80000) return "medium";
+  return "large";
 }
 
 function round(value) {
