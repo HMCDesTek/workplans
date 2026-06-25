@@ -1,4 +1,8 @@
-# Sustainability Workplan Builder
+# workplans
+
+Workgroup Workplan Builder for sustainability project planning.
+
+## Sustainability Workplan Builder
 
 Open `index.html` in a browser to use the local workplan tool. It is a standalone static app, so it does not need a server or package install.
 
